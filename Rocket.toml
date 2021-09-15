@@ -17,8 +17,8 @@ msgpack = "2 MiB"
 "file/jpg" = "5 MiB"
 
 [default.tls]
-certs = "/fakesite_cert/chained.pem"
-key = "/fakesite_cert/domain.key"
+certs = "/fakesite_cert/chained_cert.pem"
+key = "/fakesite_cert/private_key.pem"
 
 [default.shutdown]
 ctrlc = true
