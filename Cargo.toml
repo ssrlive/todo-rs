@@ -1,10 +1,25 @@
 [package]
-name = "db"
+name = "todo"
 version = "0.1.0"
 edition = "2018"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 rocket = { version = "0.5.0-rc.1", features = ["tls"] }
+rusqlite = { version = "0.14.0", features = ["bundled"] }
+diesel = { version = "1.4.8", features = ["sqlite", "r2d2"] }
+diesel_migrations = "1.4.0"
 
+[dev-dependencies]
+parking_lot = "0.11.2"
+rand = "0.8.4"
+
+[dependencies.rocket_sync_db_pools]
+version = "0.1.0-rc.1"
+features = ["diesel_sqlite_pool"]
+
+[dependencies.rocket_dyn_templates]
+version = "0.1.0-rc.1"
+features = ["tera"]

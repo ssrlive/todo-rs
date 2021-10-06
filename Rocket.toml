@@ -1,4 +1,5 @@
 [default]
+template_dir = "static"
 address = "0.0.0.0"
 port = 8000
 workers = 16
@@ -9,6 +10,9 @@ temp_dir = "/tmp"
 cli_colors = true
 ## NOTE: Don't (!) use this key! Generate your own!
 secret_key = "hPRYyVRiMyxpw5sBB1XeCMN1kFsDCqKvBi2QJxBVHQk="
+
+[default.databases.sqlite_database]
+url = "db/db.sqlite"
 
 [default.limits]
 forms = "64 kB"
