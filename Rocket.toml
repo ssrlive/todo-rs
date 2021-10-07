@@ -5,6 +5,7 @@ port = 8000
 workers = 16
 keep_alive = 5
 ident = "Rocket"
+# please change "normal" to "off" when you deploy the web app
 log_level = "normal"
 temp_dir = "/tmp"
 cli_colors = true
