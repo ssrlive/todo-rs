@@ -104,8 +104,8 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
     rocket
 }
 
-#[rocket::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[launch]
+fn rocket_main() -> _ {
     rocket::build()
         .attach(DbConn::fairing())
         .attach(Template::fairing())
@@ -113,7 +113,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .mount("/", FileServer::from(relative!("static")))
         .mount("/", routes![index])
         .mount("/todo", routes![new, toggle, delete])
-        .launch().await?;
-    Ok(())
 }
 
