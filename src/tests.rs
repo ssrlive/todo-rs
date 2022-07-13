@@ -15,7 +15,7 @@ macro_rules! run_test {
         let _lock = DB_LOCK.lock();
 
         rocket::async_test(async move {
-            let $client = Client::tracked(super::rocket_main()).await.expect("Rocket client");
+            let $client = Client::tracked(super::rocket()).await.expect("Rocket client");
             let db = super::DbConn::get_one($client.rocket()).await;
             let $conn = db.expect("failed to get database connection for testing");
             Task::delete_all(&$conn).await.expect("failed to delete all tasks for testing");
@@ -30,7 +30,7 @@ fn test_index() {
     use rocket::local::blocking::Client;
 
     let _lock = DB_LOCK.lock();
-    let client = Client::tracked(super::rocket_main()).unwrap();
+    let client = Client::tracked(super::rocket()).unwrap();
     let response = client.get("/").dispatch();
     assert_eq!(response.status(), Status::Ok);
 }
@@ -138,9 +138,8 @@ fn test_bad_form_submissions() {
             .dispatch()
             .await;
 
-        let mut cookies = res.headers().get("Set-Cookie");
+        assert!(!res.cookies().iter().any(|c| c.value().contains("error")));
         assert_eq!(res.status(), Status::UnprocessableEntity);
-        assert!(!cookies.any(|value| value.contains("error")));
 
         // Submit a form with an empty description. We look for 'error' in the
         // cookies which corresponds to flash message being set as an error.
@@ -150,8 +149,18 @@ fn test_bad_form_submissions() {
             .dispatch()
             .await;
 
-        let mut cookies = res.headers().get("Set-Cookie");
-        assert!(cookies.any(|value| value.contains("error")));
+        // Check that the flash cookie set and that we're redirected to index.
+        assert!(res.cookies().iter().any(|c| c.value().contains("error")));
+        assert_eq!(res.status(), Status::SeeOther);
+
+        // The flash cookie should still be present and the error message should
+        // be rendered the index.
+        let body = client.get("/").dispatch().await.into_string().await.unwrap();
+        assert!(body.contains("Description cannot be empty."));
+
+        // Check that the flash is cleared upon another visit to the index.
+        let body = client.get("/").dispatch().await.into_string().await.unwrap();
+        assert!(!body.contains("Description cannot be empty."));
 
         // Submit a form without a description. Expect a 422 but no flash error.
         let res = client.post("/todo")
@@ -160,8 +169,7 @@ fn test_bad_form_submissions() {
             .dispatch()
             .await;
 
-        let mut cookies = res.headers().get("Set-Cookie");
+        assert!(!res.cookies().iter().any(|c| c.value().contains("error")));
         assert_eq!(res.status(), Status::UnprocessableEntity);
-        assert!(!cookies.any(|value| value.contains("error")));
     })
 }

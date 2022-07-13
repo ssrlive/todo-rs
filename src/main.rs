@@ -105,7 +105,7 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
 }
 
 #[launch]
-fn rocket_main() -> _ {
+fn rocket() -> _ {
     rocket::build()
         .attach(DbConn::fairing())
         .attach(Template::fairing())
@@ -114,4 +114,3 @@ fn rocket_main() -> _ {
         .mount("/", routes![index])
         .mount("/todo", routes![new, toggle, delete])
 }
-
