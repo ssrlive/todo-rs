@@ -1,9 +1,9 @@
 use super::task::Task;
 
-use rand::{Rng, thread_rng, distributions::Alphanumeric};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
+use rocket::http::{ContentType, Status};
 use rocket::local::asynchronous::Client;
-use rocket::http::{Status, ContentType};
 
 // We use a lock to synchronize between tests so DB operations don't collide.
 // For now. In the future, we'll have a nice way to run each test in a DB
@@ -11,18 +11,20 @@ use rocket::http::{Status, ContentType};
 static DB_LOCK: parking_lot::Mutex<()> = parking_lot::const_mutex(());
 
 macro_rules! run_test {
-    (|$client:ident, $conn:ident| $block:expr) => ({
+    (|$client:ident, $conn:ident| $block:expr) => {{
         let _lock = DB_LOCK.lock();
 
         rocket::async_test(async move {
             let $client = Client::tracked(super::rocket()).await.expect("Rocket client");
             let db = super::DbConn::get_one($client.rocket()).await;
             let $conn = db.expect("failed to get database connection for testing");
-            Task::delete_all(&$conn).await.expect("failed to delete all tasks for testing");
+            Task::delete_all(&$conn)
+                .await
+                .expect("failed to delete all tasks for testing");
 
             $block
         })
-    })
+    }};
 }
 
 #[test]
@@ -42,7 +44,8 @@ fn test_insertion_deletion() {
         let init_tasks = Task::all(&conn).await.unwrap();
 
         // Issue a request to insert a new task.
-        client.post("/todo")
+        client
+            .post("/todo")
             .header(ContentType::Form)
             .body("description=My+first+task")
             .dispatch()
@@ -73,7 +76,8 @@ fn test_insertion_deletion() {
 fn test_toggle() {
     run_test!(|client, conn| {
         // Issue a request to insert a new task; ensure it's not yet completed.
-        client.post("/todo")
+        client
+            .post("/todo")
             .header(ContentType::Form)
             .body("description=test_for_completion")
             .dispatch()
@@ -109,7 +113,8 @@ fn test_many_insertions() {
                 .map(char::from)
                 .collect();
 
-            client.post("/todo")
+            client
+                .post("/todo")
                 .header(ContentType::Form)
                 .body(format!("description={}", desc))
                 .dispatch()
@@ -133,17 +138,15 @@ fn test_many_insertions() {
 fn test_bad_form_submissions() {
     run_test!(|client, _conn| {
         // Submit an empty form. We should get a 422 but no flash error.
-        let res = client.post("/todo")
-            .header(ContentType::Form)
-            .dispatch()
-            .await;
+        let res = client.post("/todo").header(ContentType::Form).dispatch().await;
 
         assert!(!res.cookies().iter().any(|c| c.value().contains("error")));
         assert_eq!(res.status(), Status::UnprocessableEntity);
 
         // Submit a form with an empty description. We look for 'error' in the
         // cookies which corresponds to flash message being set as an error.
-        let res = client.post("/todo")
+        let res = client
+            .post("/todo")
             .header(ContentType::Form)
             .body("description=")
             .dispatch()
@@ -163,7 +166,8 @@ fn test_bad_form_submissions() {
         assert!(!body.contains("Description cannot be empty."));
 
         // Submit a form without a description. Expect a 422 but no flash error.
-        let res = client.post("/todo")
+        let res = client
+            .post("/todo")
             .header(ContentType::Form)
             .body("evil=smile")
             .dispatch()
