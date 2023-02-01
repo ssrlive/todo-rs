@@ -51,7 +51,7 @@ impl Task {
     pub async fn toggle_with_id(id: i32, conn: &DbConn) -> QueryResult<usize> {
         conn.run(move |c| {
             let task = tasks::table.filter(tasks::id.eq(id)).get_result::<Task>(c)?;
-            let new_status = !task.completed.unwrap_or(false);
+            let new_status = !task.completed.unwrap_or_default();
             let updated_task = diesel::update(tasks::table.filter(tasks::id.eq(id)));
             updated_task.set(tasks::completed.eq(new_status)).execute(c)
         })

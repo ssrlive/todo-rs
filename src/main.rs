@@ -116,13 +116,15 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
 
 #[rocket::main]
 async fn main() {
-    let _ = rocket::build()
+    let _ = rocket().launch().await;
+}
+
+fn rocket() -> Rocket<Build> {
+    rocket::build()
         .attach(DbConn::fairing())
         .attach(Template::fairing())
         .attach(AdHoc::on_ignite("Run Migrations", run_migrations))
         .mount("/", FileServer::from(relative!("static")))
         .mount("/", routes![index])
         .mount("/todo", routes![new, toggle, delete])
-        .launch()
-        .await;
 }
