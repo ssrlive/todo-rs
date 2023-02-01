@@ -2,8 +2,6 @@
 extern crate rocket;
 #[macro_use]
 extern crate rocket_sync_db_pools;
-#[macro_use]
-extern crate diesel;
 
 mod task;
 #[cfg(test)]
@@ -19,7 +17,7 @@ use rocket::{Build, Rocket};
 
 use rocket_dyn_templates::Template;
 
-use crate::task::{Task, Todo};
+use crate::task::Task;
 
 #[database("sqlite_database")]
 pub struct DbConn(diesel::SqliteConnection);
@@ -54,7 +52,7 @@ impl Context {
 }
 
 #[post("/", data = "<todo_form>")]
-async fn new(todo_form: Form<Todo>, conn: DbConn) -> Flash<Redirect> {
+async fn new(todo_form: Form<Task>, conn: DbConn) -> Flash<Redirect> {
     let todo = todo_form.into_inner();
     if todo.description.is_empty() {
         Flash::error(Redirect::to("/"), "Description cannot be empty.")
